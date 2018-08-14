@@ -1,0 +1,6 @@
+framework module tarengine {
+  umbrella header "tarengine.h"
+
+  export *
+  module * { export * }
+}
