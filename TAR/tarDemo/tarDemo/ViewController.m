@@ -33,8 +33,6 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    self.markerNames = [NSMutableArray arrayWithObjects:@"cat", @"dog", @"nemo", @"arrow", nil];
-
     self.engine = [[TAREngine alloc] initWithController:self];
     self.engine.useDefaultRender = NO;
     self.engine.renderDelegate = self;
@@ -90,18 +88,13 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
     [self.glImage setTexture:glTexture];
 }
 
+#pragma mark - Control Marker
+
 - (void)addMarker {
-    // runtime add marker
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (self.markerNames.count > 0) {
-            [self addMarker];
-        }
-    });
     MarkerResource *marker = [[MarkerResource alloc] init];
     marker.mid = (int)self.markerNames.count + 1;
     marker.type = MARKER_TYPE_NFT;
-    marker.name = self.markerNames.lastObject;
-    [self.markerNames removeLastObject];
+    marker.name = @"cat";
     NSString *path = [[NSBundle mainBundle] pathForResource:marker.name ofType:@"jpg"];
     NSData *imageData = [NSData dataWithContentsOfFile:path];
     marker.jpegData = imageData;
@@ -110,12 +103,8 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
 }
 
 - (void)deleteMarker {
-    //    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(30 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-    //        NSLog(@"%s", __FUNCTION__);
-    //        [self.engine.markerHelper deleteMarker:2];
-    //    });
+//    [self.engine.markerHelper deleteMarker:2];
 }
-
 
 #pragma mark - TAREngineMarkerDelegate
 
@@ -257,19 +246,19 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
     float rImage = img_w / img_h;
     float diffy;
     float tmp0[8];
-    if (rScreen >= rImage) {
-        xR = screenW / img_w;
-        yR = screenW / img_w;
-        diffy = (img_h - screenH * img_w / screenW) / 2.0F;
-        tmp0[0] = mCornor[6] * xR;
-        tmp0[1] = (mCornor[7] - diffy) * yR;
-        tmp0[2] = mCornor[0] * xR;
-        tmp0[3] = (mCornor[1] - diffy) * yR;
-        tmp0[4] = mCornor[2] * xR;
-        tmp0[5] = (mCornor[3] - diffy) * yR;
-        tmp0[6] = mCornor[4] * xR;
-        tmp0[7] = (mCornor[5] - diffy) * yR;
-    } else {
+//    if (rScreen >= rImage) {
+//        xR = screenW / img_w;
+//        yR = screenW / img_w;
+//        diffy = (img_h - screenH * img_w / screenW) / 2.0F;
+//        tmp0[0] = mCornor[6] * xR;
+//        tmp0[1] = (mCornor[7] - diffy) * yR;
+//        tmp0[2] = mCornor[0] * xR;
+//        tmp0[3] = (mCornor[1] - diffy) * yR;
+//        tmp0[4] = mCornor[2] * xR;
+//        tmp0[5] = (mCornor[3] - diffy) * yR;
+//        tmp0[6] = mCornor[4] * xR;
+//        tmp0[7] = (mCornor[5] - diffy) * yR;
+//    } else {
         xR = screenH / img_h;
         yR = screenH / img_h;
         diffy = (img_w - screenW * img_h / screenH) / 2.0F;
@@ -282,7 +271,7 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
         tmp0[6] = (mCornor[4] - diffy) * xR;
         tmp0[7] = mCornor[5] * yR;
 
-    }
+//    }
 
 //    if (this.mViewWidth > this.mViewHeight) {
 //        tmp[0] = 2.0F * tmp0[0] / screenW - 1.0F;

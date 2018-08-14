@@ -126,16 +126,16 @@
     GLuint textCoor = glGetAttribLocation(self.program, "textCoordinate");
     glVertexAttribPointer(textCoor, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*5, NULL+sizeof(GL_FLOAT)*3);
     glEnableVertexAttribArray(textCoor);
-    
-    GLKMatrix4 matrix = GLKMatrix4Identity;
-//    if (!isLandscape) {
-//        matrix = GLKMatrix4Rotate(matrix, GLKMathDegreesToRadians(270), 0.0f, 0.0f, 1.0f);
-//    }
-    glUniformMatrix4fv(glGetUniformLocation(self.program, "u_Matrix"), 1, 0, matrix.m);
 
     glUniformMatrix4fv(glGetUniformLocation(self.program, "projectionMatrix"), 1, 0, projectMatrix.m);
 
     glUniformMatrix4fv(glGetUniformLocation(self.program, "cameraMatrix"), 1, 0, cameraMatrix.m);
+
+    GLKMatrix4 matrix = GLKMatrix4Identity;
+    //    if (!isLandscape) {
+    //        matrix = GLKMatrix4Rotate(matrix, GLKMathDegreesToRadians(270), 0.0f, 0.0f, 1.0f);
+    //    }
+    glUniformMatrix4fv(glGetUniformLocation(self.program, "u_Matrix"), 1, 0, matrix.m);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _rgb);
