@@ -52,63 +52,72 @@
 ////////////////GLRenderRGB//////////////////////////
 @implementation GLImageRGB
 
-- (instancetype)initWithSize:(int)width height:(int)height
-{
+- (instancetype)initWithSize:(int)width height:(int)height {
     if (self = [super initWithSize:width height:height]) {
         [self setupGLProgram];
         
         // 这里宽高设置死了，但是可以动态设置
-        _rgb = createTexture2D(GL_RGBA, self.width, self.height, NULL);
-    }
+        _texture = createTexture2D(GL_RGBA, self.width, self.height, NULL);
+        
+        self.modelMatrix = GLKMatrix4Identity;
+            }
     return self;
 }
 
-- (void)setupGLProgram
-{
+- (void)setupGLProgram {
     NSString *vertFile = [[NSBundle bundleForClass:self.class] pathForResource:@"rgb_vertex.glsl" ofType:nil];
     NSString *fragFile = [[NSBundle bundleForClass:self.class] pathForResource:@"rgb_frag.glsl" ofType:nil];
     
     self.program = createGLProgramFromFile(vertFile.UTF8String, fragFile.UTF8String);
 }
 
-- (void)setTexture:(GLImageTexture *)texture
-{
+- (void)setTexture:(GLImageTexture *)texture {
     if ([texture isMemberOfClass:[GLImageTextureRGB class]]) {
         
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         
         GLImageTextureRGB *rgbTexture = (GLImageTextureRGB *)texture;
-        glBindTexture(GL_TEXTURE_2D, _rgb);
+        glBindTexture(GL_TEXTURE_2D, _texture);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, rgbTexture.RGBA);
     }
 }
 
-- (void)update:(ImageFrame*)image format:(int)format
-{
-    if (format == IMAGE_FORMAT_BGRA) {
-        CVPixelBufferRef pixelBuffer = image.data;
-        CVPixelBufferLockBaseAddress(pixelBuffer, 0);
-        int width = (int)CVPixelBufferGetWidth(pixelBuffer);
-        int height = (int)CVPixelBufferGetHeight(pixelBuffer);
-        int bytesPerRow = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
-        
-        size_t rgbSize = height * bytesPerRow;
-        if (_pixelCache == NULL) {
-            _pixelCache = malloc(rgbSize);
-        }
-        uint8_t * data = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0);
-        memcpy(_pixelCache, data, rgbSize);
-        CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glBindTexture(GL_TEXTURE_2D, _rgb);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, _pixelCache);
-    }
+- (void)glDraw {
+    CGFloat scale = UIScreen.mainScreen.scale;
+    CGSize size = UIScreen.mainScreen.bounds.size;
+    glViewport(0, 0, size.width * scale, size.height * scale);
+
+    glUseProgram(self.program);
+
+    GLfloat vertices[] = {
+        -0.5f, 0.5f, 1.0f,
+        -0.5f, -0.5f, 1.0f,
+        0.5f, 0.5f, 1.0f,
+        0.5f, -0.5f, 1.0f,
+    };
+    // 创建VBO
+    self.vertexVBO = createVBO(GL_ARRAY_BUFFER, GL_STATIC_DRAW, sizeof(vertices), vertices);
+    glBindBuffer(GL_ARRAY_BUFFER, self.vertexVBO);
+
+    // Position
+    int position = glGetAttribLocation(self.program, "position");
+    glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*3, NULL);
+    glEnableVertexAttribArray(position);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _texture);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 - (void)glDraw:(bool)isLandscape corners:(float *)corners projectionM:(GLKMatrix4)projectMatrix viewM:(GLKMatrix4)cameraMatrix {
     glUseProgram(self.program);
 
-    self.vertCount = 4;
+    CGFloat scale = UIScreen.mainScreen.scale;
+    CGSize size = UIScreen.mainScreen.bounds.size;
+    glViewport(0, 0, size.width * scale, size.height * scale);
+
+    glUseProgram(self.program);
+
     GLfloat vertices[] = {
         // x, y, z, u, v
         corners[0],  corners[1], 1.0f, 0.0f, 0.0f,
@@ -118,7 +127,7 @@
     };
     // 创建VBO
     self.vertexVBO = createVBO(GL_ARRAY_BUFFER, GL_STATIC_DRAW, sizeof(vertices), vertices);
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, self.vertexVBO);
     glEnableVertexAttribArray(glGetAttribLocation(self.program, "position"));
     glVertexAttribPointer(glGetAttribLocation(self.program, "position"), 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*5, NULL);
@@ -127,29 +136,25 @@
     glVertexAttribPointer(textCoor, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*5, NULL+sizeof(GL_FLOAT)*3);
     glEnableVertexAttribArray(textCoor);
 
-    glUniformMatrix4fv(glGetUniformLocation(self.program, "projectionMatrix"), 1, 0, projectMatrix.m);
+//    glUniformMatrix4fv(glGetUniformLocation(self.program, "projectionMatrix"), 1, 0, projectMatrix.m);
+//
+//    glUniformMatrix4fv(glGetUniformLocation(self.program, "cameraMatrix"), 1, 0, cameraMatrix.m);
 
-    glUniformMatrix4fv(glGetUniformLocation(self.program, "cameraMatrix"), 1, 0, cameraMatrix.m);
+    glUniformMatrix4fv(glGetUniformLocation(self.program, "modelMatrix"), 1, 0, self.modelMatrix.m);
 
-    GLKMatrix4 matrix = GLKMatrix4Identity;
-    //    if (!isLandscape) {
-    //        matrix = GLKMatrix4Rotate(matrix, GLKMathDegreesToRadians(270), 0.0f, 0.0f, 1.0f);
-    //    }
-    glUniformMatrix4fv(glGetUniformLocation(self.program, "u_Matrix"), 1, 0, matrix.m);
+//    GLKMatrix4 matrix = GLKMatrix4Identity;
+//    if (!isLandscape) {
+//        matrix = GLKMatrix4Rotate(matrix, GLKMathDegreesToRadians(270), 0.0f, 0.0f, 1.0f);
+//    }
+//    glUniformMatrix4fv(glGetUniformLocation(self.program, "u_Matrix"), 1, 0, matrix.m);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _rgb);
+    glBindTexture(GL_TEXTURE_2D, _texture);
     glUniform1i(glGetUniformLocation(self.program, "image0"), 0);
-    
+
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    
-//    glDisableVertexAttribArray(glGetAttribLocation(self.program, "position"));
-//    glDisableVertexAttribArray(glGetAttribLocation(self.program, "texcoord"));
-//
-//    glBindTexture(GL_TEXTURE_2D, 0);
-//    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
 }
+
 - (void)dealloc {
     if (_pixelCache != NULL) {
         free(_pixelCache);

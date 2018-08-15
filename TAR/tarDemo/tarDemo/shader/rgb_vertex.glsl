@@ -1,20 +1,21 @@
-attribute vec3 position;
+attribute vec4 position;
 attribute vec3 color;
 attribute vec2 texcoord;
-uniform mat4 u_Matrix;
+
+//uniform mat4 u_Matrix;
+//uniform mat4 projectionMatrix;
+//uniform mat4 cameraMatrix;
+//uniform mat4 modelMatrix;
 
 varying vec2 v_texcoord;
 
 void main()
 {
-    const float degree = radians(-90.0);
-   
-    const mat3 rotate = mat3(
-        cos(degree), sin(degree), 0.0,
-        -sin(degree), cos(degree), 0.0,
-        0.0, 0.0, 1.0
-    );
-    
-    gl_Position = u_Matrix * vec4(position, 1.0);
+    gl_Position = position;
+//    gl_Position = u_Matrix * position;
     v_texcoord = texcoord;
+
+
+//    mat4 mvp = projectionMatrix * cameraMatrix * modelMatrix;
+//    gl_Position = mvp * position;
 }

@@ -16,14 +16,16 @@
 @property (nonatomic, assign) int vertCount;
 @property (nonatomic, readonly) int width;
 @property (nonatomic, readonly) int height;
+@property (assign, nonatomic) GLKMatrix4 modelMatrix;
 - (void)setTexture:(GLImageTexture *)texture;
 - (void)update: (id)image format:(int)format;
+- (void)glDraw;
 - (void)glDraw:(bool)isLandscape corners:(float *)corners projectionM:(GLKMatrix4)projectMatrix viewM:(GLKMatrix4)cameraMatrix;
 - (instancetype) initWithSize:(int)width height:(int)height;
 @end
 
 @interface GLImageRGB : GLImage
-@property(nonatomic, assign, readonly) GLuint rgb;
+@property(nonatomic, assign, readonly) GLuint texture;
 @end
 
 @interface GLImageYUV : GLImage

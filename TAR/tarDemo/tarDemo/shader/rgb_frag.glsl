@@ -8,6 +8,5 @@ void main()
 {
     // bgra
     // rgba
-    vec4 color = texture2D(image0, v_texcoord);
-    gl_FragColor = vec4(color.bgr, 1.0);
+    gl_FragColor = texture2D(image0, v_texcoord);
 }

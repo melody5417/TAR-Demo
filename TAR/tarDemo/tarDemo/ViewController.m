@@ -103,7 +103,7 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
 }
 
 - (void)deleteMarker {
-//    [self.engine.markerHelper deleteMarker:2];
+    [self.engine.markerHelper deleteMarker:2];
 }
 
 #pragma mark - TAREngineMarkerDelegate
@@ -125,11 +125,9 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
 }
 
 - (void)onMarkerAdded:(MarkerResource*)markerResource succeed:(BOOL)succeed {
-    NSLog(@"%s mid=%d succeed=%@", __FUNCTION__, markerResource.mid, succeed==YES ? @"true" : @"false");
 }
 
 - (void)onMarkerDeleted:(int)mid succeed:(BOOL)succeed {
-    NSLog(@"%s mid=%d succeed=%@", __FUNCTION__, mid, succeed==YES ? @"true" : @"false");
 }
 
 #pragma mark - TAREngineRenderDelegate
@@ -137,13 +135,14 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
 - (void)onDrawRect:(CGRect)rect frame:(id)frame projectionMatrix:(float*)projectionMatrix {
 
     if (frame == nil) { return; }
+//    [self.glImage glDraw];
+
     if ([frame isKindOfClass:[Frame class]]) {
         Frame *resFrame = (Frame *)frame;
         if ([resFrame.image isKindOfClass:[ImageFrame class]]) {
             // 每帧的图片数据
-            ImageFrame *image = (ImageFrame *)resFrame.image;
-            UIImage *backgroudImage = [self imageFromPixelBuffer:image.data];
-
+//            ImageFrame *image = (ImageFrame *)resFrame.image;
+//            UIImage *backgroudImage = [self imageFromPixelBuffer:image.data];
         }
         for (MarkerRecognition *marker in resFrame.recognitions) {
             int markerId = marker.mid;
@@ -152,12 +151,9 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
             ImageFrame *imageFrame = (ImageFrame *)resFrame.image;
             GLKMatrix4 markerProjectionMatrix = GLKMatrix4Make(projectionMatrix[0], projectionMatrix[1], projectionMatrix[2], projectionMatrix[3], projectionMatrix[4], projectionMatrix[5], projectionMatrix[6], projectionMatrix[7], projectionMatrix[8], projectionMatrix[9], projectionMatrix[10], projectionMatrix[11], projectionMatrix[12], projectionMatrix[13], projectionMatrix[14], projectionMatrix[15]);
 
-            //            [self.glCube glDraw:markerProjectionMatrix viewM:modelViewMatrix];
-            [self.glImage update:imageFrame format:IMAGE_FORMAT_BGRA];
+//                        [self.glCube glDraw:markerProjectionMatrix viewM:modelViewMatrix];
             float *cornersInOpenGL = [self convertOpenGL:resFrame cornors:corners];
-            [self.glImage glDraw:NO corners:cornersInOpenGL projectionM:markerProjectionMatrix viewM:modelViewMatrix];
-
-            NSLog(@"find marker %d", marker.mid);
+            [self.glImage glDraw:YES corners:cornersInOpenGL projectionM:markerProjectionMatrix viewM:modelViewMatrix];
         }
     }
 }
@@ -165,14 +161,10 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
 #pragma mark - TAREngineStatusDelegate
 
 - (void)onStarted {
-    NSLog(@"yiqi log %s", __FUNCTION__);
     [self addMarker];
-    // todo yiqi delete not work
-    [self deleteMarker];
 }
 
 - (void)onPaused {
-    NSLog(@"yiqi log %s", __FUNCTION__);
 }
 
 #pragma mark - Util
@@ -224,13 +216,6 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
 }
 
 - (float *)convertOpenGL:(Frame *)f cornors:(float *)mCornor {
-    CGPoint point0 = CGPointMake(mCornor[0], mCornor[1]);
-    CGPoint point1 = CGPointMake(mCornor[2], mCornor[3]);
-    CGPoint point2 = CGPointMake(mCornor[4], mCornor[5]);
-    CGPoint point3 = CGPointMake(mCornor[6], mCornor[7]);
-
-    NSLog(@"four anchor point: %@ %@ %@ %@", NSStringFromCGPoint(point0),
-          NSStringFromCGPoint(point1), NSStringFromCGPoint(point2), NSStringFromCGPoint(point3));
     float squareCoords[8];
     float tmp[8];
     float xR = 0.0F;
@@ -239,26 +224,26 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
     float img_h = (float)[(ImageFrame *)f.image height];
     float screenW = 0.0F;
     float screenH = 0.0F;
-    screenW = MIN(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.height);
-    screenH = MAX(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.height);
+    screenW = MAX(self.view.bounds.size.width, self.view.bounds.size.height);
+    screenH = MIN(self.view.bounds.size.width, self.view.bounds.size.height);
 
     float rScreen = screenW / screenH;
     float rImage = img_w / img_h;
     float diffy;
     float tmp0[8];
-//    if (rScreen >= rImage) {
-//        xR = screenW / img_w;
-//        yR = screenW / img_w;
-//        diffy = (img_h - screenH * img_w / screenW) / 2.0F;
-//        tmp0[0] = mCornor[6] * xR;
-//        tmp0[1] = (mCornor[7] - diffy) * yR;
-//        tmp0[2] = mCornor[0] * xR;
-//        tmp0[3] = (mCornor[1] - diffy) * yR;
-//        tmp0[4] = mCornor[2] * xR;
-//        tmp0[5] = (mCornor[3] - diffy) * yR;
-//        tmp0[6] = mCornor[4] * xR;
-//        tmp0[7] = (mCornor[5] - diffy) * yR;
-//    } else {
+    if (rScreen >= rImage) {
+        xR = screenW / img_w;
+        yR = screenW / img_w;
+        diffy = (img_h - screenH * img_w / screenW) / 2.0F;
+        tmp0[0] = mCornor[6] * xR;
+        tmp0[1] = (mCornor[7] - diffy) * yR;
+        tmp0[2] = mCornor[0] * xR;
+        tmp0[3] = (mCornor[1] - diffy) * yR;
+        tmp0[4] = mCornor[2] * xR;
+        tmp0[5] = (mCornor[3] - diffy) * yR;
+        tmp0[6] = mCornor[4] * xR;
+        tmp0[7] = (mCornor[5] - diffy) * yR;
+    } else {
         xR = screenH / img_h;
         yR = screenH / img_h;
         diffy = (img_w - screenW * img_h / screenH) / 2.0F;
@@ -271,18 +256,18 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
         tmp0[6] = (mCornor[4] - diffy) * xR;
         tmp0[7] = mCornor[5] * yR;
 
-//    }
+    }
 
-//    if (this.mViewWidth > this.mViewHeight) {
-//        tmp[0] = 2.0F * tmp0[0] / screenW - 1.0F;
-//        tmp[1] = 1.0F - 2.0F * tmp0[1] / screenH;
-//        tmp[2] = 2.0F * tmp0[2] / screenW - 1.0F;
-//        tmp[3] = 1.0F - 2.0F * tmp0[3] / screenH;
-//        tmp[4] = 2.0F * tmp0[4] / screenW - 1.0F;
-//        tmp[5] = 1.0F - 2.0F * tmp0[5] / screenH;
-//        tmp[6] = 2.0F * tmp0[6] / screenW - 1.0F;
-//        tmp[7] = 1.0F - 2.0F * tmp0[7] / screenH;
-//    } else {
+    if (self.view.bounds.size.width > self.view.bounds.size.height) {
+        tmp[0] = 2.0F * tmp0[0] / screenW - 1.0F;
+        tmp[1] = 1.0F - 2.0F * tmp0[1] / screenH;
+        tmp[2] = 2.0F * tmp0[2] / screenW - 1.0F;
+        tmp[3] = 1.0F - 2.0F * tmp0[3] / screenH;
+        tmp[4] = 2.0F * tmp0[4] / screenW - 1.0F;
+        tmp[5] = 1.0F - 2.0F * tmp0[5] / screenH;
+        tmp[6] = 2.0F * tmp0[6] / screenW - 1.0F;
+        tmp[7] = 1.0F - 2.0F * tmp0[7] / screenH;
+    } else {
         tmp[0] = 1.0F - 2.0F * tmp0[1] / screenH;
         tmp[1] = 1.0F - 2.0F * tmp0[0] / screenW;
         tmp[2] = 1.0F - 2.0F * tmp0[3] / screenH;
@@ -291,7 +276,7 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
         tmp[5] = 1.0F - 2.0F * tmp0[4] / screenW;
         tmp[6] = 1.0F - 2.0F * tmp0[7] / screenH;
         tmp[7] = 1.0F - 2.0F * tmp0[6] / screenW;
-//    }
+    }
 
     squareCoords[0] = tmp[0];
     squareCoords[1] = tmp[1];
@@ -301,6 +286,7 @@ TAREngineRenderDelegate, TAREngineStatusDelegate>
     squareCoords[5] = tmp[5];
     squareCoords[6] = tmp[6];
     squareCoords[7] = tmp[7];
+
     return squareCoords;
 }
 
